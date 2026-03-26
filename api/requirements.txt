@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+geoalchemy2
+alembic
+pydantic-settings
+python-dotenv
+firebase-admin
+python-jose[cryptography]
