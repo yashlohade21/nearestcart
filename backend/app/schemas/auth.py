@@ -1,19 +1,18 @@
-from __future__ import annotations
-
-from pydantic import BaseModel, Field
-
-from app.schemas.user import UserResponse
+from pydantic import BaseModel
 
 
-class SendOTPRequest(BaseModel):
-    phone: str = Field(..., description="Phone number in E.164 format, e.g. +919876543210")
+class OTPSendRequest(BaseModel):
+    phone: str
 
 
-class VerifyOTPRequest(BaseModel):
-    phone: str = Field(..., description="Phone number in E.164 format")
-    otp_code: str = Field(..., min_length=4, max_length=6, description="OTP code received via SMS")
+class OTPVerifyRequest(BaseModel):
+    phone: str
+    otp: str
+    name: str | None = None
 
 
-class AuthResponse(BaseModel):
+class TokenResponse(BaseModel):
     access_token: str
-    user: UserResponse
+    token_type: str = "bearer"
+    user_id: str
+    is_new_user: bool = False
