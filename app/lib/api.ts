@@ -39,11 +39,18 @@ export async function api<T = unknown>(
     // SecureStore not available on web — ignore
   }
 
+  // Get active company ID for multi-company support
+  let companyId: string | null = null;
+  try {
+    companyId = await SecureStore.getItemAsync("active_company_id");
+  } catch {}
+
   const config: RequestInit = {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(companyId ? { "X-Company-Id": companyId } : {}),
       ...headers,
     },
   };

@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     # Redis — caching and background jobs (leave empty to disable)
     REDIS_URL: str = ""
 
+    # Google Gemini API — voice parsing, i18n translation
+    GEMINI_API_KEY: str = ""
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../lib/api";
 import { Colors, Fonts } from "../../lib/colors";
 import { formatRupees } from "../../components/formatters";
+import { useT } from "../../lib/i18n";
 
 interface MandiRate {
   id: string; product_name: string; mandi_name: string;
@@ -15,6 +17,7 @@ interface MandiRate {
 const fmt = formatRupees;
 
 export default function MandiRatesScreen() {
+  const t = useT();
   const [rates, setRates] = useState<MandiRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -35,10 +38,10 @@ export default function MandiRatesScreen() {
     setSyncing(true);
     try {
       const result = await api<{ synced: number; fetched: number }>("/mandi-rates/sync", { method: "POST" });
-      Alert.alert("Synced", `${result.synced} rates synced from ${result.fetched} fetched`);
+      Alert.alert(t("synced"), `${result.synced} ${t("ratesSynced")} ${result.fetched} ${t("fetched")}`);
       fetchRates();
     } catch {
-      Alert.alert("Error", "Failed to sync rates");
+      Alert.alert(t("error"), t("failedSyncRates"));
     } finally {
       setSyncing(false);
     }
@@ -55,28 +58,29 @@ export default function MandiRatesScreen() {
       <Text style={styles.mandiText}>{item.mandi_name}, {item.city}</Text>
       <View style={styles.priceRow}>
         <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>Min</Text>
+          <Text style={styles.priceLabel}>{t("min")}</Text>
           <Text style={styles.priceValue}>{item.min_price != null ? fmt(item.min_price) : "—"}</Text>
         </View>
         <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>Modal</Text>
+          <Text style={styles.priceLabel}>{t("modal")}</Text>
           <Text style={[styles.priceValue, styles.modalPrice]}>{item.modal_price != null ? fmt(item.modal_price) : "—"}</Text>
         </View>
         <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>Max</Text>
+          <Text style={styles.priceLabel}>{t("max")}</Text>
           <Text style={styles.priceValue}>{item.max_price != null ? fmt(item.max_price) : "—"}</Text>
         </View>
       </View>
-      <Text style={styles.unitText}>per {item.unit}</Text>
+      <Text style={styles.unitText}>{t("per")} {item.unit}</Text>
     </View>
   );
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.greenBg }} edges={["bottom"]}>
     <View style={styles.container}>
       <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search product..."
+          placeholder={t("searchProduct")}
           placeholderTextColor={Colors.textMuted}
           value={search}
           onChangeText={setSearch}
@@ -103,21 +107,22 @@ export default function MandiRatesScreen() {
           ListEmptyComponent={
             <View style={styles.center}>
               <Ionicons name="leaf-outline" size={40} color={Colors.textMuted} />
-              <Text style={styles.emptyText}>No rates found</Text>
-              <Text style={styles.emptySubtext}>Tap sync to fetch latest mandi rates</Text>
+              <Text style={styles.emptyText}>{t("noRatesFound")}</Text>
+              <Text style={styles.emptySubtext}>{t("tapSyncRates")}</Text>
             </View>
           }
         />
       )}
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.greenBg },
   searchRow: { flexDirection: "row", margin: 16, marginBottom: 8, gap: 8 },
-  searchInput: { flex: 1, backgroundColor: Colors.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: Fonts.base, color: Colors.text, borderWidth: 1, borderColor: Colors.border },
-  syncButton: { backgroundColor: Colors.green, borderRadius: 12, width: 44, justifyContent: "center", alignItems: "center" },
+  searchInput: { flex: 1, backgroundColor: Colors.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: Fonts.base, color: Colors.text, borderWidth: 1, borderColor: Colors.border },
+  syncButton: { backgroundColor: Colors.green, borderRadius: 12, width: 48, minHeight: 48, justifyContent: "center", alignItems: "center" },
   list: { paddingHorizontal: 16, paddingBottom: 24 },
   card: { backgroundColor: Colors.card, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },

@@ -1,6 +1,7 @@
 // English translations — Dalla Deal Tracker
 const en = {
   // ── Common ──
+  success: "Success",
   save: "Save",
   cancel: "Cancel",
   delete: "Delete",
@@ -23,14 +24,15 @@ const en = {
   // ── Tab Labels ──
   tabHome: "Home",
   tabDeals: "Deals",
-  tabCalc: "Calc",
+  tabFeatures: "Features",
   tabPay: "Pay",
   tabMore: "More",
 
   // ── Header Titles ──
   headerDallaTracker: "Dalla Deal Tracker",
   headerDeals: "Deals",
-  headerCalculator: "Deal Calculator",
+  headerFeatures: "Features",
+  headerPrintCenter: "Print Center",
   headerPayments: "Payments",
   headerMore: "More",
   headerNewDeal: "New Deal",
@@ -70,6 +72,15 @@ const en = {
   noDealsFound: "No deals found",
   createNewDeal: "Create a new deal to get started",
   loadingMore: "Loading more...",
+  searchDeals: "Search by farmer, buyer, product...",
+  recover: "Recover",
+  recoverAdvance: "Recover Advance",
+  recoveryAmount: "Recovery Amount",
+  remainingBalance: "Remaining Balance",
+  recoveryRecorded: "Recovery recorded!",
+  failedRecover: "Failed to record recovery",
+  attachPhoto: "Attach Photo",
+  photoAttached: "Photo attached",
 
   // ── Payments Screen ──
   totalReceivable: "Total Receivable",
@@ -162,6 +173,8 @@ const en = {
   voiceError: "Could not understand. Please try again.",
   useResult: "Use Result",
   tryAgain: "Try Again",
+  parsing: "Understanding...",
+  listen: "Listen",
 
   // ── Profile Screen ──
   business: "Business",
@@ -246,6 +259,8 @@ const en = {
   editDeal: "Edit Deal",
   markComplete: "Mark Complete",
   generateInvoice: "Generate Invoice",
+  generateBilty: "Transport Bilty",
+  headerBilty: "Bilty / Transport Receipt",
   failedLoadDeal: "Failed to load deal",
   failedUpdateDeal: "Failed to update deal",
   updateDeal: "Update Deal",
@@ -278,6 +293,9 @@ const en = {
   buyers: "Buyers",
   avgCost: "Avg Cost",
   totalSpend: "Total Spend",
+  disputes: "Disputes",
+  advanceDue: "Advance Due",
+  profit: "Profit",
 
   // ── Mandi Rates ──
   searchProduct: "Search product...",
@@ -343,6 +361,365 @@ const en = {
   completed: "Completed",
   buy: "Buy",
   sell: "Sell",
+
+  // ── Grid Dashboard ──
+  modules: "Modules",
+
+  // ── Agent Master ──
+  headerAgents: "Agent Master",
+  noAgents: "No agents",
+  addFirstAgent: "Add your first agent",
+  newAgent: "New Agent",
+  addAgent: "Add Agent",
+  agentName: "Agent name",
+  commissionRate: "Commission Rate (%)",
+  commissionRatePlaceholder: "e.g. 2.5",
+  failedCreateAgent: "Failed to create agent",
+  failedDeleteAgent: "Failed to delete agent",
+  failedLoadAgents: "Failed to load agents",
+  deleteAgent: "Delete Agent",
+  commission: "commission",
+
+  // ── Bank Master ──
+  headerBanks: "Bank Master",
+  noBanks: "No bank accounts",
+  addFirstBank: "Add your first bank account",
+  newBank: "New Bank Account",
+  addBank: "Add Bank Account",
+  bankName: "Bank Name",
+  bankNamePlaceholder: "e.g. State Bank of India",
+  accountNo: "Account Number",
+  accountNoPlaceholder: "e.g. 1234567890",
+  ifscCode: "IFSC Code",
+  ifscCodePlaceholder: "e.g. SBIN0001234",
+  branch: "Branch",
+  branchPlaceholder: "e.g. Main Branch, Mumbai",
+  openingBalance: "Opening Balance",
+  openingBalancePlaceholder: "e.g. 50000",
+  currentBalance: "Current Balance",
+  failedCreateBank: "Failed to create bank account",
+  failedDeleteBank: "Failed to delete bank account",
+  failedLoadBanks: "Failed to load bank accounts",
+  deleteBank: "Delete Bank Account",
+
+  // ── Supplier Master ──
+  headerSuppliers: "Supplier Master",
+  noSuppliers: "No suppliers",
+  addFirstSupplier: "Add your first supplier",
+  newSupplier: "New Supplier",
+  addSupplier: "Add Supplier",
+  supplierName: "Supplier name",
+  village: "Village",
+  villagePlaceholder: "Village name",
+  district: "District",
+  districtPlaceholder: "District name",
+  statePlaceholder: "State name",
+  failedCreateSupplier: "Failed to add supplier",
+  failedDeleteSupplier: "Failed to delete supplier",
+  failedLoadSuppliers: "Failed to load suppliers",
+  deleteSupplier: "Delete Supplier",
+
+  // ── Customer Master ──
+  headerCustomers: "Customer Master",
+  noCustomers: "No customers",
+  addFirstCustomer: "Add your first customer",
+  newCustomer: "New Customer",
+  addCustomer: "Add Customer",
+  customerName: "Customer name",
+  contactPerson: "Contact Person",
+  contactPersonPlaceholder: "Contact person name",
+  companyType: "Company Type",
+  companyTypePlaceholder: "e.g. Wholesaler, Retailer",
+  cityPlaceholder: "City name",
+  gstNumberPlaceholder: "e.g. 27AABCU9603R1ZM",
+  failedCreateCustomer: "Failed to add customer",
+  failedDeleteCustomer: "Failed to delete customer",
+  failedLoadCustomers: "Failed to load customers",
+  deleteCustomer: "Delete Customer",
+
+  // ── Purchase Entry ──
+  headerPurchaseEntry: "Purchase Entry",
+  purchaseEntry: "Purchase Entry",
+  purchaseEntryDesc: "Record new purchase from supplier",
+  selectSupplier: "Select Supplier",
+  enterQuantity: "Enter Quantity",
+  enterBuyRate: "Enter Buy Rate (₹/unit)",
+  purchaseSaved: "Purchase saved successfully",
+  failedSavePurchase: "Failed to save purchase",
+
+  // ── Sale Entry ──
+  headerSaleEntry: "Sale Entry",
+  saleEntry: "Sale Entry",
+  saleEntryDesc: "Record new sale to customer",
+  selectCustomer: "Select Customer",
+  enterSellRate: "Enter Sell Rate (₹/unit)",
+  saleSaved: "Sale saved successfully",
+  failedSaveSale: "Failed to save sale",
+
+  // ── Receipt Voucher ──
+  headerReceiptVoucher: "Receipt Voucher",
+  receiptVoucher: "Receipt Voucher",
+  receiptVoucherDesc: "Record payment received from customer",
+  enterAmount: "Enter Amount (₹)",
+  referenceNoPlaceholder: "Cheque / UTR / Transaction ID",
+  receiptSaved: "Receipt saved successfully",
+  failedSaveReceipt: "Failed to save receipt",
+
+  // ── Payment Voucher ──
+  headerPaymentVoucher: "Payment Voucher",
+  paymentVoucher: "Payment Voucher",
+  paymentVoucherDesc: "Record payment made to supplier",
+  paymentSaved: "Payment saved successfully",
+  failedSavePayment: "Failed to save payment",
+
+  // ── Ledger ──
+  headerLedger: "Ledger",
+  ledger: "Ledger",
+  ledgerDesc: "Party-wise transaction ledger",
+  selectPartyType: "Select Party Type",
+  selectParty: "Select Party",
+  closingBalance: "Closing Balance",
+  totalDebit: "Total Debit",
+  totalCredit: "Total Credit",
+  debit: "Debit",
+  credit: "Credit",
+  runningBalance: "Balance",
+  noLedgerEntries: "No transactions found",
+
+  // ── Stock Register ──
+  headerStockRegister: "Stock Register",
+  stockRegister: "Stock Register",
+  stockRegisterDesc: "Product-wise stock summary",
+  purchased: "Purchased",
+  sold: "Sold",
+  netStock: "Net Stock",
+  purchaseValue: "Purchase Value",
+  saleValue: "Sale Value",
+  margin: "Margin",
+  noStockData: "No stock data found",
+
+  // ── Day Book ──
+  headerDayBook: "Day Book",
+  dayBook: "Day Book",
+  dayBookDesc: "Daily transaction summary",
+  todaysDeals: "Today's Deals",
+  todaysPayments: "Today's Payments",
+  totalPurchases: "Total Purchases",
+  totalSales: "Total Sales",
+  totalReceipts: "Total Receipts",
+  totalPaymentsOut: "Total Payments Out",
+  netCashFlow: "Net Cash Flow",
+  noDealsToday: "No deals today",
+  noPaymentsToday: "No payments today",
+
+  // ── Outstanding ──
+  headerOutstanding: "Outstanding",
+  outstanding: "Outstanding",
+  outstandingDesc: "Aging-wise outstanding report",
+  current: "Current",
+  days30_60: "30-60 days",
+  days60_90: "60-90 days",
+  days90Plus: "90+ days",
+  noOutstanding: "No outstanding amounts",
+
+  // ── GST Report ──
+  headerGstReport: "GST Report",
+  gstReport: "GST Report",
+  gstReportDesc: "Product-wise GST summary",
+  periodStart: "From",
+  periodEnd: "To",
+  grossProfit: "Gross Profit",
+  dealsCount: "Deals Count",
+  hsnCode: "HSN Code",
+  noGstData: "No data for selected period",
+  generateReport: "Generate Report",
+
+  // ── Mandi trading keys ──
+
+  // Farmer Entry
+  headerFarmerEntry: "Farmer Entry",
+  farmerEntry: "Farmer Entry",
+  farmerEntryDesc: "Record farmer produce intake",
+  selectKharidar: "Select Kharidar",
+  weight: "Weight",
+  rate: "Rate",
+  hamali: "Hamali (Loading)",
+  tawali: "Tawali (Weighing)",
+  warai: "Warai (Handling)",
+  autoCharge: "Auto Charge",
+  kharcha: "Expenses",
+
+  // Farmer Sale / Fee Breakup
+  headerFarmerSale: "Farmer Sale",
+  farmerSale: "Farmer Sale",
+  farmerSaleDesc: "Fee deduction details",
+  marketFees: "Market Fees",
+  supervision: "Supervision",
+  adatCommission: "Adat Commission",
+  bardan: "Bardan (Packaging)",
+  sutli: "Sutli (Binding)",
+  gadiBhada: "Gadi Bhada (Freight)",
+  weightShort: "Weight Short",
+  totalDeductions: "Total Deductions",
+  netPayable: "Net Payable",
+
+  // Farmer Payment
+  headerFarmerPayment: "Farmer Payment",
+  farmerPayment: "Farmer Payment",
+  cashAmount: "Cash Amount",
+  narration: "Narration",
+
+  // Nave Bill
+  headerNaveBill: "Nave Bill",
+  naveBill: "Nave Bill",
+  naveBillDesc: "Create nave bill",
+  billNo: "Bill No.",
+  billDate: "Bill Date",
+  addItem: "Add Item",
+  pautiNo: "Pauti No.",
+  totalAmount: "Total Amount",
+
+  // Cash Book
+  headerCashEntry: "Cash Book",
+  cashEntry: "Cash Book",
+  cashEntryDesc: "Record cash entry",
+  receipt: "Receipt",
+  payment: "Payment",
+  partyName: "Party Name",
+
+  // Bank Transaction
+  headerBankTxn: "Bank Transaction",
+  bankTxn: "Bank Transaction",
+  bankTxnDesc: "Bank deposit/withdrawal",
+  deposit: "Deposit",
+  withdrawal: "Withdrawal",
+  chequeNo: "Cheque No.",
+  chequeDate: "Cheque Date",
+
+  // Expense
+  headerExpenseEntry: "Expense Entry",
+  expenseEntry: "Expense Entry",
+  expenseEntryDesc: "Record expense",
+  expenseCategory: "Expense Category",
+
+  // Vehicle Master
+  headerVehicleMaster: "Vehicle Master",
+  vehicleMaster: "Vehicle Master",
+  noVehicles: "No vehicles",
+  addFirstVehicle: "Add your first vehicle",
+  ownerName: "Owner Name",
+  driverName: "Driver Name",
+
+  // Delivery Places
+  headerDeliveryPlaces: "Delivery Places",
+  deliveryPlaces: "Delivery Places",
+  placeName: "Place Name",
+
+  // Kharidar
+  headerKharidarMaster: "Kharidar Master",
+  kharidarMaster: "Kharidar Master",
+  noKharidars: "No kharidars",
+  addFirstKharidar: "Add your first kharidar",
+
+  // Agent Commission
+  headerAgentCommission: "Agent Commission",
+  agentCommission: "Agent Commission",
+  commissionPct: "Commission %",
+  commissionAmount: "Commission Amount",
+  billTotal: "Bill Total",
+
+  // Balance Check
+  headerBalanceCheck: "Balance Check",
+  balanceCheck: "Balance Check",
+  cashBalance: "Cash Balance",
+  bankBalance: "Bank Balance",
+
+  // Reports Hub
+  headerReportsHub: "Reports",
+  reportsHub: "Reports",
+  invoiceReports: "Invoice Reports",
+  statementReports: "Statement Reports",
+  dateWiseReports: "Date-wise Reports",
+  ledgerReports: "Ledger Reports",
+  farmerReports: "Farmer Reports",
+  financialReports: "Financial Reports",
+  agentReports: "Agent Reports",
+
+  // Company
+  company: "Company",
+  selectCompany: "Select Company",
+  switchCompany: "Switch Company",
+
+  // User Management
+  headerUserManagement: "User Management",
+
+  // Common actions (new)
+  deleting: "Deleting...",
+  required: "Required",
+  selectDate: "Select Date",
+  selectAgent: "Select Agent",
+  selectBank: "Select Bank",
+  mobileNo: "Mobile No.",
+  partyType: "Party Type",
+  alreadyPaid: "Already Paid",
+  entryAmount: "Entry Amount",
+  feeBreakup: "Fee Breakup",
+  summary: "Summary",
+  billDetails: "Bill Details",
+  lineItems: "Line Items",
+  feeDetails: "Fee Details",
+  billSummary: "Bill Summary",
+  charges: "Charges",
+  cashInHand: "Cash in Hand",
+  milnaHai: "Milna Hai (Receivable)",
+  denaHai: "Dena Hai (Payable)",
+  unpaidCommission: "Unpaid Commission",
+  markPaid: "Mark Paid",
+  noCommissions: "No commissions found",
+  failedToSave: "Failed to save",
+  failedToDelete: "Failed to delete",
+  longPressToDelete: "Long press to delete",
+  deleteConfirm: "Are you sure you want to delete?",
+  paymentRecorded: "Payment recorded!",
+  amountReceived: "Amount Received",
+  amountPaid: "Amount Paid",
+
+  // Purchase/Sale entry fields
+  vehicleNo: "Vehicle No.",
+  loadingCost: "Loading Cost",
+  unloadingCost: "Unloading Cost",
+  grossAmount: "Gross Amount",
+  netAmount: "Net Amount",
+  purchaseDate: "Purchase Date",
+  invoiceNo: "Invoice No.",
+  saleDate: "Sale Date",
+  lrNo: "LR No.",
+  tcsAmount: "TCS Amount",
+  addTopay: "Add To-Pay",
+  lessTopay: "Less To-Pay",
+  poNo: "PO No.",
+  commissionDeduction: "Commission Deduction",
+  purchaseDetails: "Purchase Details",
+  saleDetails: "Sale Details",
+  transportDetails: "Transport Details",
+  costsAndCharges: "Costs & Charges",
+
+  // Company & User management
+  companyName: "Company Name",
+  addCompany: "Add Company",
+  createUser: "Create User",
+  assignRole: "Assign Role",
+  superAdmin: "Super Admin",
+  branchUser: "Branch User",
+  financialYear: "Financial Year",
+
+  // Dashboard
+  todaysBusiness: "Today's Business",
+  purchases: "Purchases",
+  sales: "Sales",
+  quickActions: "Quick Actions",
+  allFeatures: "All Features",
+  reports: "Reports",
 } as const;
 
 export type TranslationKey = keyof typeof en;

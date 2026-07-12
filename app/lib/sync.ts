@@ -140,7 +140,7 @@ export async function fullSync(): Promise<void> {
     // Process pending uploads first
     await processSyncQueue();
 
-    // Download latest data from server
+    // Download latest data from server — core entities
     const [farmers, buyers, products, deals] = await Promise.all([
       rawApi<any[]>("/farmers").catch(() => []),
       rawApi<any[]>("/buyers").catch(() => []),
@@ -148,7 +148,24 @@ export async function fullSync(): Promise<void> {
       rawApi<any[]>("/deals?limit=200").catch(() => []),
     ]);
 
-    // Upsert into local DB
+    // Download mandi trading entities
+    const [
+      agents, companies, vehicles, deliveryPlaces, kharidars,
+      bankAccounts, purchaseEntries, saleEntries,
+    ] = await Promise.all([
+      rawApi<any[]>("/agents").catch(() => []),
+      rawApi<any[]>("/companies").catch(() => []),
+      rawApi<any[]>("/vehicles").catch(() => []),
+      rawApi<any[]>("/delivery-places").catch(() => []),
+      rawApi<any[]>("/kharidars").catch(() => []),
+      rawApi<any[]>("/bank-accounts").catch(() => []),
+      rawApi<any[]>("/purchases").catch(() => []),
+      rawApi<any[]>("/sales").catch(() => []),
+    ]);
+
+    const now = new Date().toISOString();
+
+    // Upsert into local DB — core entities
     await upsertMany(
       "farmers",
       farmers.map((f: any) => ({
@@ -158,9 +175,14 @@ export async function fullSync(): Promise<void> {
         village: f.village || null,
         district: f.district || null,
         state: f.state || null,
+        gaon: f.gaon || null,
+        taluka: f.taluka || null,
+        bank_name: f.bank_name || null,
+        account_no: f.account_no || null,
+        ifsc_code: f.ifsc_code || null,
         notes: f.notes || null,
         is_active: f.is_active ? 1 : 0,
-        updated_at: f.updated_at || new Date().toISOString(),
+        updated_at: f.updated_at || now,
       }))
     );
 
@@ -177,7 +199,7 @@ export async function fullSync(): Promise<void> {
         gst_number: b.gst_number || null,
         notes: b.notes || null,
         is_active: b.is_active ? 1 : 0,
-        updated_at: b.updated_at || new Date().toISOString(),
+        updated_at: b.updated_at || now,
       }))
     );
 
@@ -189,7 +211,9 @@ export async function fullSync(): Promise<void> {
         name_local: p.name_local || null,
         category: p.category || null,
         unit: p.unit || "kg",
-        updated_at: new Date().toISOString(),
+        product_name_marathi: p.product_name_marathi || null,
+        gst_rate: p.gst_rate || null,
+        updated_at: now,
       }))
     );
 
@@ -214,12 +238,133 @@ export async function fullSync(): Promise<void> {
         deal_date: d.deal_date,
         notes: d.notes || null,
         net_profit: d.net_profit || 0,
-        updated_at: d.updated_at || new Date().toISOString(),
+        updated_at: d.updated_at || now,
       }))
     );
 
-    await setSyncMeta("last_sync", new Date().toISOString());
-    await setSyncMeta("last_full_sync", new Date().toISOString());
+    // Upsert mandi trading entities
+    if (agents.length > 0) {
+      await upsertMany(
+        "agents",
+        agents.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          phone: a.phone || null,
+          commission_rate: a.commission_rate || null,
+          branch: a.branch || null,
+          is_active: a.is_active ? 1 : 0,
+          updated_at: a.updated_at || now,
+        }))
+      );
+    }
+
+    if (companies.length > 0) {
+      await upsertMany(
+        "companies",
+        companies.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          address: c.address || null,
+          gst_no: c.gst_no || null,
+          is_default: c.is_default ? 1 : 0,
+          updated_at: now,
+        }))
+      );
+    }
+
+    if (vehicles.length > 0) {
+      await upsertMany(
+        "vehicles",
+        vehicles.map((v: any) => ({
+          id: v.id,
+          vehicle_no: v.vehicle_no,
+          owner_name: v.owner_name || null,
+          driver_name: v.driver_name || null,
+          phone: v.phone || null,
+          updated_at: now,
+        }))
+      );
+    }
+
+    if (deliveryPlaces.length > 0) {
+      await upsertMany(
+        "delivery_places",
+        deliveryPlaces.map((dp: any) => ({
+          id: dp.id,
+          place_name: dp.place_name,
+          district: dp.district || null,
+          state: dp.state || null,
+          updated_at: now,
+        }))
+      );
+    }
+
+    if (kharidars.length > 0) {
+      await upsertMany(
+        "kharidars",
+        kharidars.map((k: any) => ({
+          id: k.id,
+          name: k.name,
+          phone: k.phone || null,
+          address: k.address || null,
+          updated_at: now,
+        }))
+      );
+    }
+
+    if (bankAccounts.length > 0) {
+      await upsertMany(
+        "bank_accounts",
+        bankAccounts.map((ba: any) => ({
+          id: ba.id,
+          bank_name: ba.bank_name,
+          account_no: ba.account_no || null,
+          ifsc_code: ba.ifsc_code || null,
+          branch: ba.branch || null,
+          current_balance: ba.current_balance || 0,
+          updated_at: now,
+        }))
+      );
+    }
+
+    if (purchaseEntries.length > 0) {
+      await upsertMany(
+        "purchase_entries",
+        purchaseEntries.map((pe: any) => ({
+          id: pe.id,
+          bill_no: pe.bill_no || null,
+          p_date: pe.p_date,
+          supplier_id: pe.supplier_id,
+          product_id: pe.product_id,
+          quantity: pe.quantity,
+          rate: pe.rate,
+          gross_amount: pe.gross_amount,
+          net_amount: pe.net_amount,
+          updated_at: pe.updated_at || now,
+        }))
+      );
+    }
+
+    if (saleEntries.length > 0) {
+      await upsertMany(
+        "sale_entries",
+        saleEntries.map((se: any) => ({
+          id: se.id,
+          invoice_no: se.invoice_no || null,
+          sale_date: se.sale_date,
+          buyer_id: se.buyer_id,
+          product_id: se.product_id,
+          quantity: se.quantity,
+          rate: se.rate,
+          gross_amount: se.gross_amount,
+          net_amount: se.net_amount,
+          updated_at: se.updated_at || now,
+        }))
+      );
+    }
+
+    await setSyncMeta("last_sync", now);
+    await setSyncMeta("last_full_sync", now);
   } finally {
     _isSyncing = false;
     notifyListeners();

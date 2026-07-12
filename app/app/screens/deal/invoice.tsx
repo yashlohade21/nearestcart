@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Print from "expo-print";
@@ -405,6 +406,7 @@ export default function InvoiceScreen() {
   const logoUri = user.logo_url ? `${API_HOST}${user.logo_url}` : null;
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.greenBg }} edges={["bottom"]}>
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.invoiceCard}>
@@ -626,6 +628,7 @@ export default function InvoiceScreen() {
         </TouchableOpacity>
       </Modal>
     </View>
+    </SafeAreaView>
   );
 }
 

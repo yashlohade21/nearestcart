@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Colors, Fonts } from "../lib/colors";
+import { Colors, Fonts, getProductEmoji } from "../lib/colors";
 import { formatRupees, formatDate } from "./formatters";
+import { useT } from "../lib/i18n";
 
 export interface DealCardData {
   id: string;
@@ -22,6 +23,9 @@ export default function DealCard({
   deal: DealCardData;
   onPress?: () => void;
 }) {
+  const t = useT();
+  const emoji = getProductEmoji(deal.product_name || "");
+
   return (
     <TouchableOpacity
       style={styles.dealCard}
@@ -31,7 +35,7 @@ export default function DealCard({
     >
       <View style={styles.dealHeader}>
         <Text style={styles.dealProduct}>
-          {deal.product_name || "—"}
+          {emoji} {deal.product_name || "—"}
         </Text>
         <Text
           style={[
@@ -50,7 +54,7 @@ export default function DealCard({
       </Text>
       <View style={styles.dealFooter}>
         <Text style={styles.dealDetails}>
-          {deal.quantity} {deal.unit} | Buy {formatRupees(deal.buy_rate)}/{deal.unit} | Sell{" "}
+          {deal.quantity} {deal.unit} | {t("buy")} {formatRupees(deal.buy_rate)}/{deal.unit} | {t("sell")}{" "}
           {formatRupees(deal.sell_rate)}/{deal.unit}
         </Text>
         <Text style={styles.dealDate}>{formatDate(deal.deal_date)}</Text>

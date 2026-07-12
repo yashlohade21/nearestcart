@@ -9,10 +9,16 @@ class BuyerCreate(BaseModel):
     name: str
     contact_person: str | None = None
     phone: str | None = None
+    email: str | None = None
     company_type: str | None = None
     city: str | None = None
     state: str | None = None
+    address: str | None = None
     gst_number: str | None = None
+    pan_number: str | None = None
+    opening_balance: float | None = 0
+    credit_limit: float | None = 0
+    credit_days: int | None = 0
     notes: str | None = None
 
 
@@ -20,10 +26,16 @@ class BuyerUpdate(BaseModel):
     name: str | None = None
     contact_person: str | None = None
     phone: str | None = None
+    email: str | None = None
     company_type: str | None = None
     city: str | None = None
     state: str | None = None
+    address: str | None = None
     gst_number: str | None = None
+    pan_number: str | None = None
+    opening_balance: float | None = None
+    credit_limit: float | None = None
+    credit_days: int | None = None
     notes: str | None = None
     is_active: bool | None = None
 
@@ -33,10 +45,16 @@ class BuyerResponse(BaseModel):
     name: str
     contact_person: str | None
     phone: str | None
+    email: str | None
     company_type: str | None
     city: str | None
     state: str | None
+    address: str | None
     gst_number: str | None
+    pan_number: str | None
+    opening_balance: float | None
+    credit_limit: float | None
+    credit_days: int | None
     avg_payment_days: float | None
     dispute_rate: float | None
     payment_rating: float | None

@@ -14,8 +14,8 @@ class Deal(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    farmer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("farmers.id"), index=True)
-    buyer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("buyers.id"), index=True)
+    farmer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("farmers.id"), index=True)
+    buyer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("buyers.id"), index=True)
     product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), index=True)
 
     # Quantities

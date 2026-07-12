@@ -13,8 +13,10 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Fonts } from "../../lib/colors";
 import { formatRupees } from "../../components/formatters";
+import { useT } from "../../lib/i18n";
 
 export default function CalculatorScreen() {
+  const t = useT();
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("kg");
   const [buyRate, setBuyRate] = useState("");
@@ -73,7 +75,7 @@ export default function CalculatorScreen() {
       >
         <View style={styles.row}>
           <View style={[styles.fieldContainer, { flex: 2 }]}>
-            <Text style={styles.label}>Quantity</Text>
+            <Text style={styles.label}>{t("quantity")}</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -84,7 +86,7 @@ export default function CalculatorScreen() {
             />
           </View>
           <View style={[styles.fieldContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Unit</Text>
+            <Text style={styles.label}>{t("unit")}</Text>
             <TextInput
               style={styles.input}
               placeholder="kg"
@@ -97,7 +99,7 @@ export default function CalculatorScreen() {
 
         <View style={styles.row}>
           <View style={[styles.fieldContainer, { flex: 1 }]}>
-            <Text style={styles.label}>Buy Rate (/{unit})</Text>
+            <Text style={styles.label}>{t("buyRate")} (/{unit})</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -108,7 +110,7 @@ export default function CalculatorScreen() {
             />
           </View>
           <View style={[styles.fieldContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Sell Rate (/{unit})</Text>
+            <Text style={styles.label}>{t("sellRate")} (/{unit})</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -122,7 +124,7 @@ export default function CalculatorScreen() {
 
         <View style={styles.row}>
           <View style={[styles.fieldContainer, { flex: 1 }]}>
-            <Text style={styles.label}>Transport Cost</Text>
+            <Text style={styles.label}>{t("transportCost")}</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -133,7 +135,7 @@ export default function CalculatorScreen() {
             />
           </View>
           <View style={[styles.fieldContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Labour Cost</Text>
+            <Text style={styles.label}>{t("labourCost")}</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -147,30 +149,30 @@ export default function CalculatorScreen() {
 
         {/* Results */}
         <View style={styles.resultCard}>
-          <ResultRow label="Buy Total" value={formatRupees(calc.buyTotal)} />
-          <ResultRow label="Sell Total" value={formatRupees(calc.sellTotal)} />
+          <ResultRow label={t("buyTotal")} value={formatRupees(calc.buyTotal)} />
+          <ResultRow label={t("sellTotal")} value={formatRupees(calc.sellTotal)} />
           <View style={styles.divider} />
           <ResultRow
-            label="Gross Margin"
+            label={t("grossMargin")}
             value={formatRupees(calc.grossMargin)}
             color={calc.grossMargin >= 0 ? Colors.green : Colors.red}
           />
-          <ResultRow label="Total Costs" value={formatRupees(calc.totalCosts)} />
+          <ResultRow label={t("totalCosts")} value={formatRupees(calc.totalCosts)} />
           <View style={styles.divider} />
           <ResultRow
-            label="Net Profit"
+            label={t("netProfit")}
             value={formatRupees(calc.netProfit)}
             color={calc.netProfit >= 0 ? Colors.green : Colors.red}
             bold
           />
           <View style={styles.divider} />
           <ResultRow
-            label="Margin %"
+            label={t("marginPct")}
             value={`${calc.marginPct.toFixed(1)}%`}
             color={calc.marginPct >= 0 ? Colors.green : Colors.red}
           />
           <ResultRow
-            label="Per Quintal Profit"
+            label={t("perQuintalProfit")}
             value={formatRupees(calc.perQuintal)}
             color={calc.perQuintal >= 0 ? Colors.green : Colors.red}
           />
@@ -184,7 +186,7 @@ export default function CalculatorScreen() {
             activeOpacity={0.7}
           >
             <Ionicons name="refresh" size={20} color={Colors.textSecondary} />
-            <Text style={styles.clearText}>Clear</Text>
+            <Text style={styles.clearText}>{t("clear")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -192,7 +194,7 @@ export default function CalculatorScreen() {
             onPress={useInNewDeal}
             activeOpacity={0.7}
           >
-            <Text style={styles.useButtonText}>Use in New Deal</Text>
+            <Text style={styles.useButtonText}>{t("useInNewDeal")}</Text>
             <Ionicons name="arrow-forward" size={20} color={Colors.textWhite} />
           </TouchableOpacity>
         </View>
@@ -311,6 +313,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: 14,
     paddingVertical: 16,
+    minHeight: 48,
   },
   clearText: {
     fontSize: Fonts.base,
@@ -326,6 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.green,
     borderRadius: 14,
     paddingVertical: 16,
+    minHeight: 48,
   },
   useButtonText: {
     color: Colors.textWhite,

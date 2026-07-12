@@ -13,6 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import api, { uploadFile, getApiHost } from "../lib/api";
 import { Colors, Fonts } from "../lib/colors";
+import { useT } from "../lib/i18n";
 
 interface FileRecord {
   id: string;
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export default function PhotoAttachment({ entityType, entityId, fileType = "photo" }: Props) {
+  const t = useT();
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -60,7 +62,7 @@ export default function PhotoAttachment({ entityType, entityId, fileType = "phot
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permResult.granted) {
-      Alert.alert("Permission required", `Please allow ${useCamera ? "camera" : "gallery"} access.`);
+      Alert.alert(t("permissionRequired"), useCamera ? t("allowCameraAccess") : t("allowGalleryAccess"));
       return;
     }
 
@@ -75,25 +77,25 @@ export default function PhotoAttachment({ entityType, entityId, fileType = "phot
       await uploadFile(result.assets[0].uri, entityType, entityId, fileType);
       fetchFiles();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Upload failed";
-      Alert.alert("Upload Error", message);
+      const message = err instanceof Error ? err.message : t("uploadFailed");
+      Alert.alert(t("uploadError"), message);
     } finally {
       setUploading(false);
     }
   };
 
   const handleDelete = (fileId: string) => {
-    Alert.alert("Delete Photo", "Remove this photo?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("deletePhoto"), t("removePhoto"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await api(`/files/${fileId}`, { method: "DELETE" });
             fetchFiles();
           } catch {
-            Alert.alert("Error", "Failed to delete photo");
+            Alert.alert(t("error"), t("failedDeletePhoto"));
           }
         },
       },
@@ -101,17 +103,17 @@ export default function PhotoAttachment({ entityType, entityId, fileType = "phot
   };
 
   const showOptions = () => {
-    Alert.alert("Add Photo", "Choose source", [
-      { text: "Camera", onPress: () => pickImage(true) },
-      { text: "Gallery", onPress: () => pickImage(false) },
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("addPhoto"), "", [
+      { text: t("camera"), onPress: () => pickImage(true) },
+      { text: t("gallery"), onPress: () => pickImage(false) },
+      { text: t("cancel"), style: "cancel" },
     ]);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Photos</Text>
+        <Text style={styles.title}>{t("photos")}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={showOptions}
@@ -122,7 +124,7 @@ export default function PhotoAttachment({ entityType, entityId, fileType = "phot
           ) : (
             <>
               <Ionicons name="camera" size={16} color={Colors.green} />
-              <Text style={styles.addText}>Add</Text>
+              <Text style={styles.addText}>{t("add")}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -131,7 +133,7 @@ export default function PhotoAttachment({ entityType, entityId, fileType = "phot
       {loading ? (
         <ActivityIndicator size="small" color={Colors.green} style={{ paddingVertical: 12 }} />
       ) : files.length === 0 ? (
-        <Text style={styles.emptyText}>No photos yet</Text>
+        <Text style={styles.emptyText}>{t("noPhotosYet")}</Text>
       ) : (
         <FlatList
           data={files}
@@ -186,8 +188,9 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: Colors.greenLight,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 8,
+    minHeight: 48,
   },
   addText: {
     fontSize: Fonts.sm,

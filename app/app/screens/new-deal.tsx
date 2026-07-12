@@ -10,16 +10,22 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../../lib/api";
+import * as ImagePicker from "expo-image-picker";
+import api, { uploadFile } from "../../lib/api";
 import { offlineGet, offlinePost } from "../../lib/offline-api";
 import { Colors, Fonts } from "../../lib/colors";
 import { formatRupees } from "../../components/formatters";
 import EntityPicker, { Entity } from "../../components/EntityPicker";
+import { useT } from "../../lib/i18n";
+import VoiceDealInput from "../../components/VoiceDealInput";
 
 export default function NewDealScreen() {
+  const t = useT();
   const params = useLocalSearchParams<{
     quantity?: string;
     unit?: string;
@@ -41,6 +47,7 @@ export default function NewDealScreen() {
   const [farmers, setFarmers] = useState<Entity[]>([]);
   const [buyers, setBuyers] = useState<Entity[]>([]);
   const [products, setProducts] = useState<Entity[]>([]);
+  const [stagedPhotos, setStagedPhotos] = useState<string[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -69,8 +76,8 @@ export default function NewDealScreen() {
       setFarmers((prev) => [...prev, f]);
       setFarmerId(f.id);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to add farmer";
-      Alert.alert("Error", msg);
+      const msg = err instanceof Error ? err.message : t("failedAddFarmer");
+      Alert.alert(t("error"), msg);
     }
   };
 
@@ -83,8 +90,8 @@ export default function NewDealScreen() {
       setBuyers((prev) => [...prev, b]);
       setBuyerId(b.id);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to add buyer";
-      Alert.alert("Error", msg);
+      const msg = err instanceof Error ? err.message : t("failedAddBuyer");
+      Alert.alert(t("error"), msg);
     }
   };
 
@@ -97,8 +104,8 @@ export default function NewDealScreen() {
       setProducts((prev) => [...prev, p]);
       setProductId(p.id);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to add product";
-      Alert.alert("Error", msg);
+      const msg = err instanceof Error ? err.message : t("failedAddProduct");
+      Alert.alert(t("error"), msg);
     }
   };
 
@@ -116,19 +123,92 @@ export default function NewDealScreen() {
     return { buyTotal, sellTotal, grossMargin, netProfit };
   }, [quantity, buyRate, sellRate, transportCost]);
 
+  const handleVoiceResult = (result: {
+    farmerName?: string;
+    buyerName?: string;
+    productName?: string;
+    quantity?: number;
+    unit?: string;
+    buyRate?: number;
+    sellRate?: number;
+  }) => {
+    // Match farmer
+    if (result.farmerName) {
+      const match = farmers.find(
+        (f) => f.name.toLowerCase() === result.farmerName!.toLowerCase()
+      );
+      if (match) setFarmerId(match.id);
+    }
+    // Match buyer
+    if (result.buyerName) {
+      const match = buyers.find(
+        (b) => b.name.toLowerCase() === result.buyerName!.toLowerCase()
+      );
+      if (match) setBuyerId(match.id);
+    }
+    // Match product
+    if (result.productName) {
+      const match = products.find(
+        (p) => p.name.toLowerCase() === result.productName!.toLowerCase()
+      );
+      if (match) setProductId(match.id);
+    }
+    if (result.quantity) setQuantity(String(result.quantity));
+    if (result.unit) setUnit(result.unit);
+    if (result.buyRate) setBuyRate(String(result.buyRate));
+    if (result.sellRate) setSellRate(String(result.sellRate));
+  };
+
+  const pickPhoto = async (useCamera: boolean) => {
+    const permResult = useCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permResult.granted) {
+      Alert.alert(
+        t("permissionRequired"),
+        useCamera ? t("allowCameraAccess") : t("allowGalleryAccess")
+      );
+      return;
+    }
+
+    const result = useCamera
+      ? await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: false })
+      : await ImagePicker.launchImageLibraryAsync({
+          quality: 0.7,
+          allowsEditing: false,
+          mediaTypes: ["images"],
+        });
+
+    if (result.canceled || !result.assets?.[0]) return;
+    setStagedPhotos((prev) => [...prev, result.assets[0].uri]);
+  };
+
+  const showPhotoOptions = () => {
+    Alert.alert(t("addPhoto"), "", [
+      { text: t("camera"), onPress: () => pickPhoto(true) },
+      { text: t("gallery"), onPress: () => pickPhoto(false) },
+      { text: t("cancel"), style: "cancel" },
+    ]);
+  };
+
+  const removeStagedPhoto = (idx: number) => {
+    setStagedPhotos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const saveDeal = async () => {
     if (!farmerId || !buyerId || !productId) {
-      Alert.alert("Error", "Please select farmer, buyer and product");
+      Alert.alert(t("error"), t("selectFarmerBuyerProduct"));
       return;
     }
     if (!quantity || !buyRate || !sellRate) {
-      Alert.alert("Error", "Please fill quantity and rates");
+      Alert.alert(t("error"), t("fillQuantityRates"));
       return;
     }
 
     setLoading(true);
     try {
-      const result = await offlinePost("/deals", {
+      const result = await offlinePost<{ id: string; _offline?: boolean }>("/deals", {
         farmer_id: farmerId,
         buyer_id: buyerId,
         product_id: productId,
@@ -138,20 +218,33 @@ export default function NewDealScreen() {
         sell_rate: parseFloat(sellRate),
         transport_cost: parseFloat(transportCost) || 0,
       });
-      const msg = (result as any)?._offline ? "Deal saved offline! Will sync when online." : "Deal saved!";
-      Alert.alert("Done!", msg, [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
+
+      // Upload staged photos if deal was created online (need real deal_id)
+      if (!result._offline && result.id && stagedPhotos.length > 0) {
+        for (const uri of stagedPhotos) {
+          try {
+            await uploadFile(uri, "deal", result.id, "photo");
+          } catch {
+            // Continue uploading rest even if one fails
+          }
+        }
+      }
+
+      const msg = result._offline ? t("dealSavedOffline") : t("dealSaved");
+      Alert.alert(t("done"), msg, [
+        { text: t("ok"), onPress: () => router.replace("/(tabs)") },
       ]);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to save deal";
-      Alert.alert("Error", message);
+        err instanceof Error ? err.message : t("failedSaveDeal");
+      Alert.alert(t("error"), message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.greenBg }} edges={["bottom"]}>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -160,39 +253,42 @@ export default function NewDealScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Voice Input */}
+        <VoiceDealInput onResult={handleVoiceResult} />
+
         <EntityPicker
-          label="Farmer"
-          placeholder="Select farmer"
+          label={t("farmer")}
+          placeholder={t("selectFarmer")}
           items={farmers}
           selectedId={farmerId}
           onSelect={(id) => setFarmerId(id)}
           onAddNew={addFarmer}
-          addLabel="Add Farmer"
+          addLabel={t("addFarmer")}
         />
 
         <EntityPicker
-          label="Buyer"
-          placeholder="Select buyer"
+          label={t("buyer")}
+          placeholder={t("selectBuyer")}
           items={buyers}
           selectedId={buyerId}
           onSelect={(id) => setBuyerId(id)}
           onAddNew={addBuyer}
-          addLabel="Add Buyer"
+          addLabel={t("addBuyer")}
         />
 
         <EntityPicker
-          label="Product"
-          placeholder="Select product"
+          label={t("product")}
+          placeholder={t("selectProduct")}
           items={products}
           selectedId={productId}
           onSelect={(id) => setProductId(id)}
           onAddNew={addProduct}
-          addLabel="Add Product"
+          addLabel={t("addProduct")}
         />
 
         <View style={styles.row}>
           <View style={[styles.fieldContainer, { flex: 2 }]}>
-            <Text style={styles.label}>Quantity</Text>
+            <Text style={styles.label}>{t("quantity")}</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -203,7 +299,7 @@ export default function NewDealScreen() {
             />
           </View>
           <View style={[styles.fieldContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Unit</Text>
+            <Text style={styles.label}>{t("unit")}</Text>
             <TextInput
               style={styles.input}
               placeholder="kg"
@@ -216,7 +312,7 @@ export default function NewDealScreen() {
 
         <View style={styles.row}>
           <View style={[styles.fieldContainer, { flex: 1 }]}>
-            <Text style={styles.label}>Buy Rate (/{unit})</Text>
+            <Text style={styles.label}>{t("buyRate")} (/{unit})</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -227,7 +323,7 @@ export default function NewDealScreen() {
             />
           </View>
           <View style={[styles.fieldContainer, { flex: 1, marginLeft: 12 }]}>
-            <Text style={styles.label}>Sell Rate (/{unit})</Text>
+            <Text style={styles.label}>{t("sellRate")} (/{unit})</Text>
             <TextInput
               style={styles.input}
               placeholder="0"
@@ -240,7 +336,7 @@ export default function NewDealScreen() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Transport Cost</Text>
+          <Text style={styles.label}>{t("transportCost")}</Text>
           <TextInput
             style={styles.input}
             placeholder="0"
@@ -254,16 +350,16 @@ export default function NewDealScreen() {
         {/* Calculation Preview */}
         <View style={styles.calcCard}>
           <View style={styles.calcRow}>
-            <Text style={styles.calcLabel}>Buy Total</Text>
+            <Text style={styles.calcLabel}>{t("buyTotal")}</Text>
             <Text style={styles.calcValue}>{formatRupees(calculations.buyTotal)}</Text>
           </View>
           <View style={styles.calcRow}>
-            <Text style={styles.calcLabel}>Sell Total</Text>
+            <Text style={styles.calcLabel}>{t("sellTotal")}</Text>
             <Text style={styles.calcValue}>{formatRupees(calculations.sellTotal)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.calcRow}>
-            <Text style={styles.calcLabel}>Gross Margin</Text>
+            <Text style={styles.calcLabel}>{t("grossMargin")}</Text>
             <Text
               style={[
                 styles.calcValue,
@@ -279,7 +375,7 @@ export default function NewDealScreen() {
           <View style={styles.divider} />
           <View style={styles.calcRow}>
             <Text style={[styles.calcLabel, { fontWeight: "700" }]}>
-              Net Profit
+              {t("netProfit")}
             </Text>
             <Text
               style={[
@@ -295,6 +391,42 @@ export default function NewDealScreen() {
           </View>
         </View>
 
+        {/* Photo Attachments (staged before deal exists) */}
+        <View style={styles.photoCard}>
+          <View style={styles.photoHeader}>
+            <Text style={styles.photoTitle}>{t("photos")}</Text>
+            <TouchableOpacity
+              style={styles.photoAddBtn}
+              onPress={showPhotoOptions}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="camera" size={18} color={Colors.green} />
+              <Text style={styles.photoAddText}>{t("attachPhoto")}</Text>
+            </TouchableOpacity>
+          </View>
+          {stagedPhotos.length === 0 ? (
+            <Text style={styles.photoEmpty}>{t("noPhotosYet")}</Text>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.photoList}
+            >
+              {stagedPhotos.map((uri, idx) => (
+                <View key={`${uri}-${idx}`} style={styles.photoThumbWrap}>
+                  <Image source={{ uri }} style={styles.photoThumb} />
+                  <TouchableOpacity
+                    style={styles.photoRemove}
+                    onPress={() => removeStagedPhoto(idx)}
+                  >
+                    <Ionicons name="close-circle" size={22} color={Colors.red} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
         <TouchableOpacity
           style={[styles.saveButton, loading && styles.saveButtonDisabled]}
           onPress={saveDeal}
@@ -306,12 +438,13 @@ export default function NewDealScreen() {
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={22} color={Colors.textWhite} />
-              <Text style={styles.saveButtonText}>Save Deal</Text>
+              <Text style={styles.saveButtonText}>{t("saveDeal")}</Text>
             </>
           )}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -380,6 +513,68 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.border,
     marginVertical: 10,
+  },
+  photoCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  photoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  photoTitle: {
+    fontSize: Fonts.base,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+  },
+  photoAddBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.greenLight,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    minHeight: 48,
+  },
+  photoAddText: {
+    fontSize: Fonts.sm,
+    fontWeight: "700",
+    color: Colors.green,
+  },
+  photoEmpty: {
+    textAlign: "center",
+    color: Colors.textMuted,
+    fontSize: Fonts.sm,
+    paddingVertical: 8,
+  },
+  photoList: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  photoThumbWrap: {
+    position: "relative",
+  },
+  photoThumb: {
+    width: 96,
+    height: 96,
+    borderRadius: 12,
+  },
+  photoRemove: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: Colors.card,
+    borderRadius: 12,
   },
   saveButton: {
     backgroundColor: Colors.green,

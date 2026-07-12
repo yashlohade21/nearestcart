@@ -18,6 +18,13 @@ class ProductCreate(BaseModel):
     name_local: str | None = None
     category: str | None = None
     unit: str = "kg"
+    hsn_code: str | None = None
+    purchase_price: float | None = None
+    selling_price: float | None = None
+    min_stock: float | None = 0
+    current_stock: float | None = 0
+    product_name_marathi: str | None = None
+    gst_rate: float | None = None
     is_perishable: bool = True
 
 
@@ -27,6 +34,13 @@ class ProductResponse(BaseModel):
     name_local: str | None
     category: str | None
     unit: str
+    hsn_code: str | None
+    purchase_price: float | None
+    selling_price: float | None
+    min_stock: float | None
+    current_stock: float | None
+    product_name_marathi: str | None
+    gst_rate: float | None
     is_perishable: bool
 
     model_config = {"from_attributes": True}
@@ -48,6 +62,13 @@ class ProductUpdate(BaseModel):
     name_local: str | None = None
     category: str | None = None
     unit: str | None = None
+    hsn_code: str | None = None
+    purchase_price: float | None = None
+    selling_price: float | None = None
+    min_stock: float | None = None
+    current_stock: float | None = None
+    product_name_marathi: str | None = None
+    gst_rate: float | None = None
     is_perishable: bool | None = None
 
 

@@ -5,8 +5,8 @@ from pydantic import BaseModel, computed_field
 
 
 class DealCreate(BaseModel):
-    farmer_id: uuid.UUID
-    buyer_id: uuid.UUID
+    farmer_id: uuid.UUID | None = None
+    buyer_id: uuid.UUID | None = None
     product_id: uuid.UUID
     quantity: float
     unit: str = "kg"
@@ -53,8 +53,8 @@ class DealUpdate(BaseModel):
 
 class DealResponse(BaseModel):
     id: uuid.UUID
-    farmer_id: uuid.UUID
-    buyer_id: uuid.UUID
+    farmer_id: uuid.UUID | None
+    buyer_id: uuid.UUID | None
     product_id: uuid.UUID
     quantity: float
     unit: str
@@ -84,6 +84,9 @@ class DealResponse(BaseModel):
     farmer_name: str | None = None
     buyer_name: str | None = None
     product_name: str | None = None
+    transporter_name: str | None = None
+    vehicle_number: str | None = None
+    vehicle_type: str | None = None
 
     @computed_field
     @property

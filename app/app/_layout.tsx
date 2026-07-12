@@ -1,30 +1,40 @@
 import { useEffect } from "react";
-import { View } from "react-native";
 import { Stack } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Colors } from "../lib/colors";
 import { startNetworkMonitor, fullSync } from "../lib/sync";
 import OfflineBanner from "../components/OfflineBanner";
+import { LanguageProvider } from "../lib/i18n";
 
 export default function RootLayout() {
   useEffect(() => {
-    // Start network monitoring and initial data sync
     startNetworkMonitor();
     fullSync().catch(() => {});
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <View style={{ flex: 1 }}>
-        <OfflineBanner />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="screens" />
-        </Stack>
-      </View>
-    </SafeAreaProvider>
+    <LanguageProvider>
+      <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor={Colors.green} />
+        <SafeAreaView
+          style={{ flex: 1, backgroundColor: Colors.green }}
+          edges={["top"]}
+        >
+          <OfflineBanner />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Colors.greenBg },
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="screens" />
+          </Stack>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </LanguageProvider>
   );
 }

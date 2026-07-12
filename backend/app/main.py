@@ -13,7 +13,16 @@ from slowapi.util import get_remote_address
 
 from app.core.background import run_scheduled_tasks
 from app.core.config import settings
-from app.routers import auth, deals, farmers, buyers, payments, advances, dashboard, products, files, transporters, export, notifications, analytics, mandi_rates, audit
+from app.routers import (
+    auth, deals, farmers, buyers, payments, advances, dashboard, products,
+    files, transporters, export, notifications, analytics, mandi_rates,
+    audit, voice, agents, bank_accounts, reports, admin,
+    # Mandi trading & accounting routers
+    companies, cash_book, bank_transactions, expenses, purchases, sales,
+    purchase_payments, sale_payments, farmer_entries, farmer_sales,
+    farmer_payments_new, nave_bills, agent_commissions, stock_ledger,
+    vehicles, delivery_places, kharidars,
+)
 
 # Initialize Sentry if DSN is configured
 if settings.SENTRY_DSN:
@@ -77,6 +86,30 @@ app.include_router(notifications.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(mandi_rates.router, prefix="/api")
 app.include_router(audit.router, prefix="/api")
+app.include_router(voice.router, prefix="/api")
+app.include_router(agents.router, prefix="/api")
+app.include_router(bank_accounts.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
+
+# Mandi trading & accounting routers
+app.include_router(companies.router, prefix="/api")
+app.include_router(cash_book.router, prefix="/api")
+app.include_router(bank_transactions.router, prefix="/api")
+app.include_router(expenses.router, prefix="/api")
+app.include_router(purchases.router, prefix="/api")
+app.include_router(sales.router, prefix="/api")
+app.include_router(purchase_payments.router, prefix="/api")
+app.include_router(sale_payments.router, prefix="/api")
+app.include_router(farmer_entries.router, prefix="/api")
+app.include_router(farmer_sales.router, prefix="/api")
+app.include_router(farmer_payments_new.router, prefix="/api")
+app.include_router(nave_bills.router, prefix="/api")
+app.include_router(agent_commissions.router, prefix="/api")
+app.include_router(stock_ledger.router, prefix="/api")
+app.include_router(vehicles.router, prefix="/api")
+app.include_router(delivery_places.router, prefix="/api")
+app.include_router(kharidars.router, prefix="/api")
 
 
 @app.get("/api/health")

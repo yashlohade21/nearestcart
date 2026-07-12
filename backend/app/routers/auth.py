@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.config import settings
 from app.core.security import create_access_token, send_otp_sms, verify_otp
+from app.core.audit import log_action
 
 limiter = Limiter(key_func=get_remote_address)
 from app.models.user import User
@@ -133,8 +134,10 @@ async def update_profile(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    for field, value in body.model_dump(exclude_none=True).items():
+    changes = body.model_dump(exclude_none=True)
+    for field, value in changes.items():
         setattr(user, field, value)
+    await log_action(db, user.id, "update", "profile", user.id, changes=changes)
     await db.commit()
     await db.refresh(user)
     return _build_profile_response(user)
@@ -175,6 +178,7 @@ async def upload_logo(
         shutil.copyfileobj(file.file, f)
 
     user.logo_url = f"/uploads/logos/{filename}"
+    await log_action(db, user.id, "update", "profile", user.id, changes={"logo_url": user.logo_url})
     await db.commit()
     await db.refresh(user)
     return _build_profile_response(user)

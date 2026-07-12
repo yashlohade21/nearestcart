@@ -19,10 +19,9 @@ import api from "../../lib/api";
 import { Colors, Fonts } from "../../lib/colors";
 import { formatRupees } from "../../components/formatters";
 import LoadingScreen from "../../components/LoadingScreen";
+import { useT } from "../../lib/i18n";
 
 type Tab = "milna" | "dena";
-
-const PAYMENT_MODES = ["Cash", "UPI", "Bank Transfer", "Cheque"];
 
 interface PendingPaymentSummary {
   party_id: string;
@@ -50,6 +49,7 @@ function getOverdueColor(days: number | null): string {
 }
 
 export default function PaymentsScreen() {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<Tab>("milna");
   const [data, setData] = useState<PendingPayments | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +64,13 @@ export default function PaymentsScreen() {
   const [payNotes, setPayNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+
+  const paymentModes = [
+    { key: "Cash", label: t("cash") },
+    { key: "UPI", label: t("upi") },
+    { key: "Bank Transfer", label: t("bankTransfer") },
+    { key: "Cheque", label: t("cheque") },
+  ];
 
   const fetchPayments = useCallback(async () => {
     try {
@@ -99,7 +106,7 @@ export default function PaymentsScreen() {
     if (!selectedParty) return;
     const amount = parseFloat(payAmount);
     if (!amount || amount <= 0) {
-      Alert.alert("Error", "Please enter a valid amount");
+      Alert.alert(t("error"), t("invalidAmount"));
       return;
     }
 
@@ -123,8 +130,8 @@ export default function PaymentsScreen() {
       setModalVisible(false);
       fetchPayments();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to record payment";
-      Alert.alert("Error", msg);
+      const msg = err instanceof Error ? err.message : t("failedRecordPayment");
+      Alert.alert(t("error"), msg);
     } finally {
       setSaving(false);
     }
@@ -158,10 +165,10 @@ export default function PaymentsScreen() {
           include_upi_link: activeTab === "milna",
         },
       });
-      Alert.alert("Sent", `Payment reminder sent to ${item.party_name}`);
+      Alert.alert(t("sent"), `${t("reminderSent")} ${item.party_name}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to send reminder";
-      Alert.alert("Error", msg);
+      const msg = err instanceof Error ? err.message : t("failedSendReminder");
+      Alert.alert(t("error"), msg);
     } finally {
       setSendingReminder(null);
     }
@@ -176,7 +183,7 @@ export default function PaymentsScreen() {
           <Text style={styles.partyName}>{item.party_name}</Text>
           <View style={styles.metaRow}>
             <Text style={styles.dealCount}>
-              {item.pending_deals} deal{item.pending_deals > 1 ? "s" : ""}
+              {item.pending_deals} {item.pending_deals > 1 ? t("dealsPlural") : t("deal")}
             </Text>
             {item.max_overdue_days != null && item.max_overdue_days > 0 && (
               <View style={styles.overdueRow}>
@@ -187,7 +194,7 @@ export default function PaymentsScreen() {
                   ]}
                 />
                 <Text style={[styles.overdueText, { color: overdueColor }]}>
-                  {item.max_overdue_days}d overdue
+                  {item.max_overdue_days}{t("dOverdue")}
                 </Text>
               </View>
             )}
@@ -210,7 +217,7 @@ export default function PaymentsScreen() {
               style={styles.recordButton}
               activeOpacity={0.7}
             >
-              <Text style={styles.recordButtonText}>Record</Text>
+              <Text style={styles.recordButtonText}>{t("record")}</Text>
             </TouchableOpacity>
             {item.party_phone && (
               <>
@@ -263,7 +270,7 @@ export default function PaymentsScreen() {
               activeTab === "milna" && styles.tabTextActive,
             ]}
           >
-            Receivable
+            {t("receivable")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -282,7 +289,7 @@ export default function PaymentsScreen() {
               activeTab === "dena" && styles.tabTextActive,
             ]}
           >
-            Payable
+            {t("payable")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -290,7 +297,7 @@ export default function PaymentsScreen() {
       {/* Total */}
       <View style={styles.totalCard}>
         <Text style={styles.totalLabel}>
-          {activeTab === "milna" ? "Total Receivable" : "Total Payable"}
+          {activeTab === "milna" ? t("totalReceivable") : t("totalPayable")}
         </Text>
         <Text
           style={[
@@ -325,8 +332,8 @@ export default function PaymentsScreen() {
               size={40}
               color={Colors.textMuted}
             />
-            <Text style={styles.emptyText}>All clear!</Text>
-            <Text style={styles.emptySubtext}>No pending payments</Text>
+            <Text style={styles.emptyText}>{t("allClear")}</Text>
+            <Text style={styles.emptySubtext}>{t("noPendingPayments")}</Text>
           </View>
         }
       />
@@ -339,7 +346,7 @@ export default function PaymentsScreen() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Record Payment</Text>
+              <Text style={styles.modalTitle}>{t("recordPayment")}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Ionicons name="close" size={24} color={Colors.text} />
               </TouchableOpacity>
@@ -347,11 +354,11 @@ export default function PaymentsScreen() {
 
             <Text style={styles.modalPartyName}>{selectedParty?.party_name}</Text>
             <Text style={styles.modalPending}>
-              Pending: {fmt(selectedParty?.pending_amount ?? 0)}
+              {t("pending")}: {fmt(selectedParty?.pending_amount ?? 0)}
             </Text>
 
             <View style={styles.formField}>
-              <Text style={styles.formLabel}>Amount *</Text>
+              <Text style={styles.formLabel}>{t("amount")} *</Text>
               <TextInput
                 style={styles.formInput}
                 placeholder="0"
@@ -363,24 +370,24 @@ export default function PaymentsScreen() {
             </View>
 
             <View style={styles.formField}>
-              <Text style={styles.formLabel}>Payment Mode</Text>
+              <Text style={styles.formLabel}>{t("paymentMode")}</Text>
               <View style={styles.pillRow}>
-                {PAYMENT_MODES.map((mode) => (
+                {paymentModes.map((mode) => (
                   <TouchableOpacity
-                    key={mode}
+                    key={mode.key}
                     style={[
                       styles.pill,
-                      payMode === mode && styles.pillActive,
+                      payMode === mode.key && styles.pillActive,
                     ]}
-                    onPress={() => setPayMode(mode)}
+                    onPress={() => setPayMode(mode.key)}
                   >
                     <Text
                       style={[
                         styles.pillText,
-                        payMode === mode && styles.pillTextActive,
+                        payMode === mode.key && styles.pillTextActive,
                       ]}
                     >
-                      {mode}
+                      {mode.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -388,10 +395,10 @@ export default function PaymentsScreen() {
             </View>
 
             <View style={styles.formField}>
-              <Text style={styles.formLabel}>Reference No.</Text>
+              <Text style={styles.formLabel}>{t("referenceNo")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="UPI ID / Cheque No."
+                placeholder={t("upiChequeNo")}
                 placeholderTextColor={Colors.textMuted}
                 value={payRef}
                 onChangeText={setPayRef}
@@ -399,10 +406,10 @@ export default function PaymentsScreen() {
             </View>
 
             <View style={styles.formField}>
-              <Text style={styles.formLabel}>Notes</Text>
+              <Text style={styles.formLabel}>{t("notes")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Optional notes"
+                placeholder={t("optionalNotes")}
                 placeholderTextColor={Colors.textMuted}
                 value={payNotes}
                 onChangeText={setPayNotes}
@@ -418,7 +425,7 @@ export default function PaymentsScreen() {
               {saving ? (
                 <ActivityIndicator color={Colors.textWhite} />
               ) : (
-                <Text style={styles.saveText}>Record Payment</Text>
+                <Text style={styles.saveText}>{t("recordPayment")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -449,6 +456,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 6,
+    minHeight: 48,
   },
   tabActiveGreen: {
     backgroundColor: Colors.green,
@@ -553,8 +561,10 @@ const styles = StyleSheet.create({
   recordButton: {
     backgroundColor: Colors.greenLight,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 12,
     borderRadius: 8,
+    minHeight: 48,
+    justifyContent: "center",
   },
   recordButtonText: {
     fontSize: Fonts.xs,
@@ -564,7 +574,11 @@ const styles = StyleSheet.create({
   callButton: {
     backgroundColor: Colors.greenLight,
     borderRadius: 20,
-    padding: 6,
+    padding: 12,
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyContainer: {
     paddingVertical: 40,
@@ -641,11 +655,13 @@ const styles = StyleSheet.create({
   },
   pill: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderRadius: 20,
     backgroundColor: Colors.bg,
     borderWidth: 1,
     borderColor: Colors.border,
+    minHeight: 48,
+    justifyContent: "center",
   },
   pillActive: {
     backgroundColor: Colors.greenLight,

@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -12,11 +12,31 @@ from app.models.deal import Deal
 from app.models.farmer import Farmer
 from app.models.buyer import Buyer
 from app.models.product import Product
+from app.models.transporter import Transporter
 from app.models.user import User
 from app.core.audit import log_action
 from app.schemas.deal import DealCreate, DealResponse, DealUpdate
 
 router = APIRouter(prefix="/deals", tags=["deals"])
+
+DEAL_LOAD_OPTIONS = [
+    selectinload(Deal.farmer),
+    selectinload(Deal.buyer),
+    selectinload(Deal.product),
+    selectinload(Deal.transporter),
+]
+
+
+def _deal_response(d: Deal) -> DealResponse:
+    return DealResponse(
+        **{c.key: getattr(d, c.key) for c in Deal.__table__.columns},
+        farmer_name=d.farmer.name if d.farmer else None,
+        buyer_name=d.buyer.name if d.buyer else None,
+        product_name=d.product.name if d.product else None,
+        transporter_name=d.transporter.name if d.transporter else None,
+        vehicle_number=d.transporter.vehicle_number if d.transporter else None,
+        vehicle_type=d.transporter.vehicle_type if d.transporter else None,
+    )
 
 
 @router.get("", response_model=list[DealResponse])
@@ -26,6 +46,7 @@ async def list_deals(
     farmer_id: uuid.UUID | None = None,
     buyer_id: uuid.UUID | None = None,
     status_filter: str | None = Query(None, alias="status"),
+    search: str | None = None,
     limit: int = 50,
     offset: int = 0,
     user: User = Depends(get_current_user),
@@ -33,7 +54,7 @@ async def list_deals(
 ):
     query = (
         select(Deal)
-        .options(selectinload(Deal.farmer), selectinload(Deal.buyer), selectinload(Deal.product))
+        .options(*DEAL_LOAD_OPTIONS)
         .where(Deal.user_id == user.id)
         .order_by(Deal.deal_date.desc(), Deal.created_at.desc())
     )
@@ -47,19 +68,27 @@ async def list_deals(
         query = query.where(Deal.buyer_id == buyer_id)
     if status_filter:
         query = query.where(Deal.status == status_filter)
+    if search:
+        # Free-text search across farmer name, buyer name, product name, notes
+        pattern = f"%{search.strip()}%"
+        query = (
+            query.outerjoin(Farmer, Deal.farmer_id == Farmer.id)
+            .outerjoin(Buyer, Deal.buyer_id == Buyer.id)
+            .outerjoin(Product, Deal.product_id == Product.id)
+            .where(
+                or_(
+                    Farmer.name.ilike(pattern),
+                    Buyer.name.ilike(pattern),
+                    Product.name.ilike(pattern),
+                    Deal.notes.ilike(pattern),
+                )
+            )
+        )
     query = query.limit(limit).offset(offset)
 
     result = await db.execute(query)
     deals = result.scalars().all()
-    return [
-        DealResponse(
-            **{c.key: getattr(d, c.key) for c in Deal.__table__.columns},
-            farmer_name=d.farmer.name if d.farmer else None,
-            buyer_name=d.buyer.name if d.buyer else None,
-            product_name=d.product.name if d.product else None,
-        )
-        for d in deals
-    ]
+    return [_deal_response(d) for d in deals]
 
 
 @router.post("", response_model=DealResponse, status_code=status.HTTP_201_CREATED)
@@ -78,13 +107,8 @@ async def create_deal(
     await db.refresh(deal)
 
     # Load relations
-    await db.refresh(deal, ["farmer", "buyer", "product"])
-    return DealResponse(
-        **{c.key: getattr(deal, c.key) for c in Deal.__table__.columns},
-        farmer_name=deal.farmer.name if deal.farmer else None,
-        buyer_name=deal.buyer.name if deal.buyer else None,
-        product_name=deal.product.name if deal.product else None,
-    )
+    await db.refresh(deal, ["farmer", "buyer", "product", "transporter"])
+    return _deal_response(deal)
 
 
 @router.get("/{deal_id}", response_model=DealResponse)
@@ -95,18 +119,13 @@ async def get_deal(
 ):
     result = await db.execute(
         select(Deal)
-        .options(selectinload(Deal.farmer), selectinload(Deal.buyer), selectinload(Deal.product))
+        .options(*DEAL_LOAD_OPTIONS)
         .where(Deal.id == deal_id, Deal.user_id == user.id)
     )
     deal = result.scalar_one_or_none()
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
-    return DealResponse(
-        **{c.key: getattr(deal, c.key) for c in Deal.__table__.columns},
-        farmer_name=deal.farmer.name if deal.farmer else None,
-        buyer_name=deal.buyer.name if deal.buyer else None,
-        product_name=deal.product.name if deal.product else None,
-    )
+    return _deal_response(deal)
 
 
 @router.delete("/{deal_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -136,7 +155,7 @@ async def update_deal(
 ):
     result = await db.execute(
         select(Deal)
-        .options(selectinload(Deal.farmer), selectinload(Deal.buyer), selectinload(Deal.product))
+        .options(*DEAL_LOAD_OPTIONS)
         .where(Deal.id == deal_id, Deal.user_id == user.id)
     )
     deal = result.scalar_one_or_none()
@@ -149,9 +168,5 @@ async def update_deal(
     await log_action(db, user.id, "update", "deal", deal_id, changes=update_data)
     await db.commit()
     await db.refresh(deal)
-    return DealResponse(
-        **{c.key: getattr(deal, c.key) for c in Deal.__table__.columns},
-        farmer_name=deal.farmer.name if deal.farmer else None,
-        buyer_name=deal.buyer.name if deal.buyer else None,
-        product_name=deal.product.name if deal.product else None,
-    )
+    await db.refresh(deal, ["farmer", "buyer", "product", "transporter"])
+    return _deal_response(deal)
