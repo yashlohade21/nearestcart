@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dalla_deal_tracker
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+app:
+  jwt:
+    secret: your-256-bit-secret-key-change-in-production-please
+    expiration-ms: 604800000  # 7 days
+  otp:
+    secret: dalla-deal-otp-secret-key
+    dev-mode: true
+    dev-otp: "888888"

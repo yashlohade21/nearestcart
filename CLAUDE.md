@@ -6,7 +6,7 @@ Business tool for agricultural middlemen (dalla/dalal) in India. Tracks deals, p
 
 ## Tech Stack
 
-- **Backend**: Python 3.10+ / FastAPI / SQLAlchemy 2.0 async / asyncpg / PostgreSQL 14
+- **Backend**: Java 17 / Spring Boot 3.3 / Spring Data JPA / PostgreSQL 14
 - **Web Dashboard**: Next.js 15 (App Router) / Tailwind CSS / TypeScript
 - **Mobile App**: Expo (React Native) / expo-router / TypeScript
 - **Database**: PostgreSQL (`dalla_deal_tracker`) — local, user `yash`
@@ -15,32 +15,28 @@ Business tool for agricultural middlemen (dalla/dalal) in India. Tracks deals, p
 
 ```
 nearkart/
-├── backend/                 # FastAPI API server (port 8000)
+├── backend-spring/              # Spring Boot API server (port 8080)
+│   ├── pom.xml                  # Maven build
+│   ├── src/main/java/com/nearkart/
+│   │   ├── NearkartApplication.java  # @SpringBootApplication entry
+│   │   ├── config/              # SecurityConfig, CorsConfig, JacksonConfig, GlobalExceptionHandler
+│   │   ├── security/            # JwtUtil, JwtAuthFilter, OtpService, UserPrincipal
+│   │   ├── entity/              # 35 JPA @Entity classes
+│   │   ├── repository/          # 35 Spring Data JPA repositories
+│   │   ├── dto/                 # ~88 Request/Response DTOs
+│   │   └── controller/          # 31 @RestController classes
+│   └── src/main/resources/
+│       └── application.yml      # DB, JWT, server config
+├── web/                         # Next.js web dashboard (port 3000)
 │   ├── app/
-│   │   ├── main.py          # FastAPI entry point
-│   │   ├── core/
-│   │   │   ├── config.py    # Pydantic settings from .env
-│   │   │   ├── database.py  # Async SQLAlchemy engine + session
-│   │   │   ├── security.py  # JWT creation/verification, OTP (bypassed in dev)
-│   │   │   └── deps.py      # get_current_user dependency
-│   │   ├── models/          # SQLAlchemy ORM models
-│   │   ├── schemas/         # Pydantic request/response schemas
-│   │   ├── routers/         # API route handlers
-│   │   └── services/        # Business logic helpers
-│   ├── alembic/             # DB migrations (not yet used — schema.sql was applied directly)
-│   ├── schema.sql           # Full PostgreSQL DDL (tables + views)
-│   ├── requirements.txt
-│   └── .env                 # Local config (DO NOT COMMIT)
-├── web/                     # Next.js web dashboard (port 3000)
+│   │   ├── (auth)/login/        # Phone + OTP login page
+│   │   └── dashboard/           # Dashboard pages
+│   └── lib/api.ts               # Axios client with Bearer token (→ port 8080)
+├── app/                         # Expo React Native mobile app
 │   ├── app/
-│   │   ├── (auth)/login/    # Phone + OTP login page
-│   │   └── dashboard/       # Dashboard pages (deals, payments, farmers, buyers, reports)
-│   └── lib/api.ts           # Axios client with Bearer token
-├── app/                     # Expo React Native mobile app
-│   ├── app/
-│   │   ├── (auth)/          # Login flow
-│   │   └── (tabs)/          # Home, New Deal, Payments, Profile
-│   └── lib/api.ts           # Fetch client with SecureStore token
+│   │   ├── (auth)/              # Login flow
+│   │   └── (tabs)/              # Home, New Deal, Payments, Profile
+│   └── lib/api.ts               # Fetch client with SecureStore token (→ port 8080)
 ├── dalla-deal-tracker.md        # Full product spec and requirements
 └── dalla-deal-tracker-db-schema.md  # Complete DB schema design
 ```
@@ -50,10 +46,8 @@ nearkart/
 ### Backend
 
 ```bash
-cd backend
-pip install -r requirements.txt
-# DB already set up: psql -U yash -d dalla_deal_tracker
-uvicorn app.main:app --reload --port 8000
+cd backend-spring
+mvn spring-boot:run  # port 8080
 ```
 
 ### Web
@@ -77,22 +71,23 @@ npx expo start
 - **Host**: localhost:5432
 - **User**: yash
 - **Database**: dalla_deal_tracker
-- **12 tables**: users, farmers, buyers, products, transporters, deals, payments, advances, photos, mandi_rates, notifications, dalla_network_posts
-- **6 views**: v_pending_from_buyers, v_pending_to_farmers, v_weekly_pnl, v_farmer_performance, v_buyer_performance, v_transporter_performance
+- **Tables**: users, farmers, buyers, products, transporters, deals, payments, advances, photos, mandi_rates, notifications, dalla_network_posts, companies, agents, bank_accounts, cash_entries, bank_transactions, expenses, purchase_entries, sale_entries, purchase_payments, sale_payments, farmer_entries, farmer_sales, farmer_payment_records, nave_bills, nave_bill_items, nave_bill_details, agent_commissions, stock_ledger, vehicles, delivery_places, kharidars, files, audit_logs
 - **Generated columns on deals table**: buy_total, sell_total, gross_margin, total_cost, net_profit (auto-computed by PostgreSQL)
 
 ## API Design
 
 - All routes under `/api` prefix
-- Auth: Phone OTP (bypassed in dev — any 6-digit code works)
-- JWT Bearer token in Authorization header
-- `get_current_user` dependency scopes all data to the logged-in dalla
+- Auth: Phone OTP (dev bypass code "888888")
+- JWT Bearer token (HS256, 7-day expiry) in Authorization header
+- `UserPrincipal.getEffectiveUserId()` scopes all data to the logged-in dalla
+- JSON uses snake_case (Jackson config)
 
 ### Key Endpoints
 
 ```
-POST /api/auth/otp/send       # Send OTP (dev: returns "000000")
-POST /api/auth/otp/verify     # Verify + get JWT (dev: any code works)
+POST /api/auth/otp/send       # Send OTP
+POST /api/auth/otp/verify     # Verify + get JWT
+GET  /api/auth/profile        # Current user profile
 
 GET/POST   /api/deals         # List/create deals
 GET/PATCH  /api/deals/:id     # Get/update deal
@@ -110,15 +105,17 @@ GET        /api/health
 
 ## Coding Rules
 
-### Backend (Python)
+### Backend (Java/Spring Boot)
 
-- Use async/await everywhere — no sync DB calls
-- All models use `DateTime(timezone=True)` for TIMESTAMPTZ columns
-- Generated DB columns (buy_total, etc.) are NOT in SQLAlchemy models — use `@property` instead
-- Pydantic schemas use `computed_field` for derived values
-- Every query MUST filter by `user_id` — data is tenant-scoped
-- Use `selectinload` for relationship eager loading
-- Keep routers thin — business logic goes in services/
+- JPA entities use `@GeneratedValue(strategy = GenerationType.UUID)` for UUID PKs
+- `BigDecimal(precision=14, scale=2)` for all monetary fields — never float/double
+- `OffsetDateTime` for TIMESTAMPTZ columns with `@PrePersist`/`@PreUpdate` lifecycle hooks
+- Every query MUST filter by `userId` — data is tenant-scoped
+- Use `@ManyToOne(fetch = LAZY)` for relationships
+- Keep controllers thin — business logic in services when complex
+- `ResponseStatusException(HttpStatus.NOT_FOUND)` for missing entities
+- Soft deletes (`isActive = false`) for master data, hard deletes for transactions
+- Deal computed columns mapped with `insertable = false, updatable = false`
 
 ### Frontend (TypeScript)
 
@@ -131,7 +128,7 @@ GET        /api/health
 ### General
 
 - Never commit `.env` files
-- Never commit `node_modules/` or `__pycache__/`
+- Never commit `node_modules/` or `target/`
 - Indian Rupee formatting: `Intl.NumberFormat("en-IN")` or `₹` prefix
 - Hindi/English bilingual UI terminology: "Milna hai" = receivable, "Dena hai" = payable
 - All monetary amounts use DECIMAL/Numeric(14,2) — never float in DB
@@ -151,7 +148,7 @@ GET        /api/health
 
 ## Current Status (Dev)
 
-- OTP bypassed — any 6-digit code works
+- OTP dev bypass code: "888888"
 - AWS S3 not configured — photo upload placeholder only
 - WhatsApp integration not implemented yet
-- Schema applied via schema.sql (not via alembic migrations)
+- Report endpoints are stubs (return empty data)

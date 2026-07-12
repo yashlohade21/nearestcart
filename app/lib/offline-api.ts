@@ -22,6 +22,17 @@ function tableForEndpoint(endpoint: string): string | null {
   if (endpoint.startsWith("/buyers")) return "buyers";
   if (endpoint.startsWith("/products")) return "products";
   if (endpoint.startsWith("/deals")) return "deals";
+  if (endpoint.startsWith("/agents")) return "agents";
+  if (endpoint.startsWith("/companies")) return "companies";
+  if (endpoint.startsWith("/vehicles")) return "vehicles";
+  if (endpoint.startsWith("/delivery-places")) return "delivery_places";
+  if (endpoint.startsWith("/kharidars")) return "kharidars";
+  if (endpoint.startsWith("/bank-accounts")) return "bank_accounts";
+  if (endpoint.startsWith("/purchases")) return "purchase_entries";
+  if (endpoint.startsWith("/sales")) return "sale_entries";
+  if (endpoint.startsWith("/cash-book")) return "cash_entries";
+  if (endpoint.startsWith("/expenses")) return "expenses";
+  if (endpoint.startsWith("/nave-bills")) return "nave_bills";
   return null;
 }
 

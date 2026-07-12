@@ -18,7 +18,7 @@ export function getApiHost(): string {
   return debuggerHost || "localhost";
 }
 
-const BASE_URL = `http://${getApiHost()}:8000/api`;
+const BASE_URL = `http://${getApiHost()}:8080/api`;
 
 interface ApiOptions {
   method?: string;
